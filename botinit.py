@@ -42,5 +42,31 @@ async def greet_all(ctx):
 async def hello(ctx):
     await ctx.send("Hello, I'm your bot!")
 
+@bot.command()
+async def ping(ctx):
+    await ctx.send("Pong!")
+
+
+### Voice Channel Logic ###
+@bot.command()
+async def voice_command(ctx):
+    # Check if the command author is in a voice channel
+    author_voice_state = ctx.author.voice
+
+    if author_voice_state is None:
+        # User is not in a voice channel
+        await ctx.send(f"{ctx.author.mention}, I'm watching you")
+        try:
+            # Send a DM to the user
+            await ctx.author.send("You aren't in a voice channel :( you forgor me")
+        except discord.Forbidden:
+            # If the user has DMs disabled, send a message in the server
+            await ctx.send(f"{ctx.author.mention}, please enable your DMs to receive instructions.")
+    else:
+        # User is in a voice channel
+        voice_channel = author_voice_state.channel
+        # You can add your logic here to join the voice channel and run a command
+        await ctx.send(f"You are in {voice_channel.name} voice channel. I can run a command here.")
+
 token = os.getenv('DISCORD_TOKEN')
 bot.run(token)
