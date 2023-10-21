@@ -3,6 +3,9 @@ import discord
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
+
+background_tasks = {}
+
 from youtube_transcript_api import YouTubeTranscriptApi
 import re
 
@@ -174,6 +177,42 @@ async def join(ctx):
 async def hello(ctx):
     await ctx.send("Hello, I'm your bot!")
 
+
+
+
+async def remind_countdown(ctx, task_code, seconds):
+    
+    await ctx.send("sleeping for {seconds} seconds...")
+    await asyncio.sleep(seconds)
+    
+    # TODO: add annoyances here. When we reach this part of the code, it means the user did not finish the task in time
+    
+    # To prevent keeping references to finished tasks forever,
+    # make each task remove its own reference from the dictionary after
+    background_tasks[task_code].add_done_callback(background_tasks.pop(task_code))
+    await ctx.send(f"{task_code} Failed to complete!")
+    
+@bot.command()
+async def cancel(ctx, task_code):
+    background_tasks[task_code].cancel()
+    background_tasks.pop(task_code)
+    await ctx.send(f"cancelled {task_code}")
+    
+
+@bot.command()
+async def tasks(ctx):
+    await ctx.send("listing tasks...")
+    for task in background_tasks.keys():
+        await ctx.send(task)
+
+@bot.command()
+async def remind(ctx, task='leetcode',seconds=10):
+    task_code = task+"-"+str(generate_task_code())
+    await ctx.send(f"Activated reminder for {task_code}!")
+    
+    _task = asyncio.create_task(remind_countdown(ctx, task_code, seconds))
+
+    background_tasks[task_code] = _task
 @bot.command()
 async def ping(ctx):
     await ctx.send("Pong!")
