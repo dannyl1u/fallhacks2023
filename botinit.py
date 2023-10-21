@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
-
+import os
+from dotenv import load_dotenv
 # Create an instance of the bot
 # bot = commands.Bot(command_prefix="!")  # Change the prefix as needed
 # Specify intents
@@ -10,6 +11,7 @@ intents = discord.Intents.all()  # This requests all available events
 
 # Create an instance of the bot with intents
 bot = commands.Bot(command_prefix="!", intents=intents)
+load_dotenv()
 
 @bot.event
 async def on_ready():
@@ -20,5 +22,5 @@ async def on_ready():
 async def hello(ctx):
     await ctx.send("Hello, I'm your bot!")
 
-token = 'MTE2NTM1MzE4ODU4MTQ0MTYwNg.G2fW0a.RkfgOBvwUU-x-cIRCQxaPkImmi7q8ivMAt32CM'
+token = os.getenv("DISCORD_TOKEN")
 bot.run(token)
