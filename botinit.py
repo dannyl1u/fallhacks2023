@@ -3,8 +3,8 @@ import discord
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
+from helper import generate_task_code
 
-background_tasks = {}
 
 from youtube_transcript_api import YouTubeTranscriptApi
 import re
@@ -13,6 +13,8 @@ import re
 from pydub import AudioSegment
 
 import pygame
+background_tasks = {}
+
 # Create an instance of the bot
 # bot = commands.Bot(command_prefix="!")  # Change the prefix as needed
 # Specify intents
@@ -197,7 +199,15 @@ async def cancel(ctx, task_code):
     background_tasks[task_code].cancel()
     background_tasks.pop(task_code)
     await ctx.send(f"cancelled {task_code}")
-    
+
+@bot.command()
+async def completeTask(ctx, task_code):
+    if task_code in background_tasks:
+        background_tasks[task_code].cancel()
+        background_tasks.pop(task_code)
+        await ctx.send(f"Congratulations, {ctx.author.name}! You have completed {task_code}!")
+    else:
+        await ctx.send(f"{task_code} is not in the list of tasks")
 
 @bot.command()
 async def tasks(ctx):
