@@ -64,7 +64,7 @@ async def greet_all(ctx):
     for member in ctx.guild.members:
         if not member.bot:  # To ensure you don't send messages to other bots
             if member.name == 'ibuprofen':
-                await ctx.send(f"Hello {member.name} 🖕")
+                await ctx.send(f"Hello {member.name}")
             elif member.name == 'haruuuuu.':
                 await ctx.send(f"No greeting for {member.name}")
             else:
