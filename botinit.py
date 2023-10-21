@@ -16,11 +16,27 @@ load_dotenv()
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user.name} (ID: {bot.user.id})')
-    print('------')
+    channel = bot.get_channel(1162235364719722610)  # Replace YOUR_CHANNEL_ID with the actual channel ID you copied.
+    # await channel.send("Fuck u, pardeep 🖕!")
+    print('Message sent to the channel')
+
+@bot.command()
+async def greet_all(ctx):
+    for member in ctx.guild.members:
+        if not member.bot:  # To ensure you don't send messages to other bots
+            
+            if member.name == 'ibuprofen':
+                await ctx.send(f"Fuck u {member.name} 🖕")
+            elif member.name == 'haruuuuu.':
+                await ctx.send(f"No greeting for {member.name}")
+            else:
+                await ctx.send(f"Hello, {member.name}!")
+        
+    await ctx.send("All members greeted!")
 
 @bot.command()
 async def hello(ctx):
     await ctx.send("Hello, I'm your bot!")
 
-token = os.getenv("DISCORD_TOKEN")
+token = os.getenv('DISCORD_TOKEN')
 bot.run(token)
