@@ -6,12 +6,14 @@ from dotenv import load_dotenv
 from gtts import gTTS
 from youtube_transcript_api import YouTubeTranscriptApi
 import re
-
+import youtube_dl
 
 
 from pydub import AudioSegment
 
 import pygame
+background_tasks = {}
+
 # Create an instance of the bot
 # bot = commands.Bot(command_prefix="!")  # Change the prefix as needed
 # Specify intents
@@ -176,6 +178,50 @@ async def join(ctx):
 async def hello(ctx):
     await ctx.send("Hello, I'm your bot!")
 
+
+
+
+async def remind_countdown(ctx, task_code, seconds):
+    
+    await ctx.send("sleeping for {seconds} seconds...")
+    await asyncio.sleep(seconds)
+    
+    # TODO: add annoyances here. When we reach this part of the code, it means the user did not finish the task in time
+    
+    # To prevent keeping references to finished tasks forever,
+    # make each task remove its own reference from the dictionary after
+    background_tasks[task_code].add_done_callback(background_tasks.pop(task_code))
+    await ctx.send(f"{task_code} Failed to complete!")
+    
+@bot.command()
+async def cancel(ctx, task_code):
+    background_tasks[task_code].cancel()
+    background_tasks.pop(task_code)
+    await ctx.send(f"cancelled {task_code}")
+
+@bot.command()
+async def completeTask(ctx, task_code):
+    if task_code in background_tasks:
+        background_tasks[task_code].cancel()
+        background_tasks.pop(task_code)
+        await ctx.send(f"Congratulations, {ctx.author.name}! You have completed {task_code}!")
+    else:
+        await ctx.send(f"{task_code} is not in the list of tasks")
+
+@bot.command()
+async def tasks(ctx):
+    await ctx.send("listing tasks...")
+    for task in background_tasks.keys():
+        await ctx.send(task)
+
+@bot.command()
+async def remind(ctx, task='leetcode',seconds=10):
+    task_code = task+"-"+str(generate_task_code())
+    await ctx.send(f"Activated reminder for {task_code}!")
+    
+    _task = asyncio.create_task(remind_countdown(ctx, task_code, seconds))
+
+    background_tasks[task_code] = _task
 @bot.command()
 async def ping(ctx):
     await ctx.send("Pong!")
@@ -205,6 +251,8 @@ async def pom_event(ctx):
             voice_channel = ctx.author.voice.channel
             voice_client = await voice_channel.connect()
             await ctx.send(f'Joined {voice_channel}')
+        vid = "https://www.youtube.com/watch?v=Pv1QnqHvlg0&ab_channel=Airixs"
+        await ctx.invoke(bot.get_command("playaudio"), vid)
 
 @bot.command()
 async def speak(ctx, *, text_to_speak):
@@ -216,7 +264,47 @@ async def speak(ctx, *, text_to_speak):
 
 @bot.command()
 async def pom_timer(ctx, minutes):
+    try:
+        minutes = int(minutes)
+    except ValueError:
+        await ctx.send("Invalid input. Please provide a valid number of minutes.")
+        return
+
+    await ctx.send(f"Pomodoro timer started for {minutes} minutes. Work hard!")
+
+    # Wait for the specified number of minutes
+    await asyncio.sleep(minutes * 60)
+
+    # After the specified time, send a message to notify the user
     await ctx.invoke(bot.get_command("pom_event"))
+
+@bot.command()
+async def playaudio(ctx, youtube_url): # play youtube video audio
+    if ctx.author.voice and ctx.author.voice.channel:
+        voice_channel = ctx.author.voice.channel
+        voice_client = await voice_channel.connect()
+        await ctx.send(f'Joined {voice_channel}')
+
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+        }
+
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(youtube_url, download=False)
+            url2 = info['formats'][0]['url']
+
+        voice_client.play(discord.FFmpegPCMAudio(url2))
+        while voice_client.is_playing():
+            await asyncio.sleep(1)
+        await voice_client.disconnect()
+    else:
+        await ctx.send("You need to be in a voice channel to use this command.")
+
 
 token = os.getenv('DISCORD_TOKEN')
 bot.run(token)
