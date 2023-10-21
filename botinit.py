@@ -245,6 +245,18 @@ async def pom_event(ctx):
         
 @bot.command()
 async def pom_timer(ctx, minutes):
+    try:
+        minutes = int(minutes)
+    except ValueError:
+        await ctx.send("Invalid input. Please provide a valid number of minutes.")
+        return
+
+    await ctx.send(f"Pomodoro timer started for {minutes} minutes. Work hard!")
+
+    # Wait for the specified number of minutes
+    await asyncio.sleep(minutes * 60)
+
+    # After the specified time, send a message to notify the user
     await ctx.invoke(bot.get_command("pom_event"))
 
 token = os.getenv('DISCORD_TOKEN')
