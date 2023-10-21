@@ -7,7 +7,6 @@ from gtts import gTTS
 from youtube_transcript_api import YouTubeTranscriptApi
 import re
 import youtube_dl
-
 from helper import generate_task_code
 
 
