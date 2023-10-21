@@ -3,12 +3,10 @@ import discord
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
-from helper import generate_task_code
-import youtube_dl
-
-
+from gtts import gTTS
 from youtube_transcript_api import YouTubeTranscriptApi
 import re
+import youtube_dl
 
 
 from pydub import AudioSegment
@@ -253,9 +251,17 @@ async def pom_event(ctx):
             voice_channel = ctx.author.voice.channel
             voice_client = await voice_channel.connect()
             await ctx.send(f'Joined {voice_channel}')
-            vid = "https://www.youtube.com/watch?v=Pv1QnqHvlg0&ab_channel=Airixs"
-            await ctx.invoke(bot.get_command("playaudio"), vid)
-        
+        vid = "https://www.youtube.com/watch?v=Pv1QnqHvlg0&ab_channel=Airixs"
+        await ctx.invoke(bot.get_command("playaudio"), vid)
+
+@bot.command()
+async def speak(ctx, *, text_to_speak):
+    try:
+        # Send the TTS message
+        await ctx.send(text_to_speak, tts=True)
+    except Exception as e:
+        await ctx.send(f"An error occurred: {str(e)}")
+
 @bot.command()
 async def pom_timer(ctx, minutes):
     try:
