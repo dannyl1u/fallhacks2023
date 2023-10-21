@@ -1,3 +1,3 @@
 Python bot
 
-pip install discord.py
+run requirements.txt
