@@ -5,3 +5,5 @@ youtube-transcript-api
 python-dotenv
 pydub
 pygame
+youtube_dl
+```
