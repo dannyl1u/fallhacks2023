@@ -4,3 +4,4 @@ beautifulsoup4==4.10.0
 youtube-transcript-api
 python-dotenv
 pydub
+pygame
