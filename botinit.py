@@ -4,6 +4,7 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv
 from helper import generate_task_code
+import youtube_dl
 
 
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -252,6 +253,8 @@ async def pom_event(ctx):
             voice_channel = ctx.author.voice.channel
             voice_client = await voice_channel.connect()
             await ctx.send(f'Joined {voice_channel}')
+            vid = "https://www.youtube.com/watch?v=Pv1QnqHvlg0&ab_channel=Airixs"
+            await ctx.invoke(bot.get_command("playaudio"), vid)
         
 @bot.command()
 async def pom_timer(ctx, minutes):
@@ -268,6 +271,34 @@ async def pom_timer(ctx, minutes):
 
     # After the specified time, send a message to notify the user
     await ctx.invoke(bot.get_command("pom_event"))
+
+@bot.command()
+async def playaudio(ctx, youtube_url): # play youtube video audio
+    if ctx.author.voice and ctx.author.voice.channel:
+        voice_channel = ctx.author.voice.channel
+        voice_client = await voice_channel.connect()
+        await ctx.send(f'Joined {voice_channel}')
+
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+        }
+
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(youtube_url, download=False)
+            url2 = info['formats'][0]['url']
+
+        voice_client.play(discord.FFmpegPCMAudio(url2))
+        while voice_client.is_playing():
+            await asyncio.sleep(1)
+        await voice_client.disconnect()
+    else:
+        await ctx.send("You need to be in a voice channel to use this command.")
+
 
 token = os.getenv('DISCORD_TOKEN')
 bot.run(token)
