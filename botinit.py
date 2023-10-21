@@ -9,6 +9,12 @@ import re
 import youtube_dl
 from helper import generate_task_code
 
+import os
+import certifi
+
+# Set the CA certificates path for SSL verification
+os.environ["SSL_CERT_FILE"] = certifi.where()
+
 
 from pydub import AudioSegment
 
