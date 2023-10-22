@@ -48,7 +48,6 @@ async def pomodoro(ctx, study_time: float, break_time: float):
             'channel_id': channel_id
         }
 
-    # await ctx.send(f"Alright {ctx.author.mention}, starting your pomodoro timer: {study_time} mins study and {break_time} mins break!")
     await _speak(ctx, f"{ctx.author.mention}, Alright starting your pomodoro timer: {study_time} mins study and {break_time} mins break!")
     await start_timer(ctx, study_time, break_time)
 
@@ -56,22 +55,48 @@ async def pomodoro(ctx, study_time: float, break_time: float):
 async def start_timer(ctx, study_time, break_time):
     user = ctx.author
     user_id = user.id
+    warning_time_fraction = 0.1
 
-    while user_id in timers:  # The loop will continue as long as the user's ID exists in the timers dict
-        await asyncio.sleep(study_time * 60)
+    while user_id in timers:  
+        # Calculate the time to sleep before sending a warning
+        warning_time_study = study_time * warning_time_fraction
+        await asyncio.sleep((study_time - warning_time_study) * 60)
         
         if user_id in timers:
-            channel = bot.get_channel(timers[user_id]['channel_id'])
-            await _speak(ctx, f"{user.mention},  your study time is up! Take a break for {break_time} mins!")
+            await send_warning(ctx, warning_time_study, break_time)
 
-            await asyncio.sleep(break_time * 60)
+            # Sleep the remaining study time after the warning
+            await asyncio.sleep(warning_time_study * 60)
+
+            channel = bot.get_channel(timers[user_id]['channel_id'])
+            await _speak(ctx, f"{user.mention}, your study time is up! Take a break for {break_time} mins!")
+
+            # Calculate the time to sleep before sending a break warning
+            warning_time_break = break_time * warning_time_fraction
+            await asyncio.sleep((break_time - warning_time_break) * 60)
             
             if user_id in timers:
+                await send_warning(ctx, warning_time_study, warning_time_break)
+
+                # Sleep the remaining break time after the warning
+                await asyncio.sleep(warning_time_break * 60)
+
                 await _speak(ctx, f"{user.mention}, Break's over! Time to get back to work!")
             else:
                 return
         else:
             return
+
+
+async def send_warning(ctx, remaining_study_time, remaining_break_time):
+    user = ctx.author
+    user_id = user.id
+    if remaining_study_time:
+        message = f"{user.mention}, you have {remaining_study_time} mins of study time left!"
+    else:
+        message = f"{user.mention}, you have {remaining_break_time} mins of break time left!"
+    await _speak(ctx, message)
+
 
 
 @bot.command()
@@ -129,19 +154,6 @@ async def youtube(ctx, youtube_url: str):
         await ctx.send(f"An error occurred: {e}")
 
 
-
-@bot.event
-async def on_message(message):
-    # This ensures that the bot does not reply to itself or other bots
-    if message.author.bot:
-        return
-
-    # Check if the message author is ibuprofen
-    if message.author.name == 'ibuprofen':
-        pass
-
-    # Important: to ensure that the bot still processes commands
-    await bot.process_commands(message)
 async def on_ready():
     print(f'Logged in as {bot.user.name} (ID: {bot.user.id})')
     channel = bot.get_channel(1162235364719722610)  # Replace YOUR_CHANNEL_ID with the actual channel ID you copied.
