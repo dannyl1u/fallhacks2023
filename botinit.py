@@ -21,7 +21,7 @@ from pydub import AudioSegment
 
 import pygame
 background_tasks = {}
-
+timers = {}
 # Create an instance of the bot
 # bot = commands.Bot(command_prefix="!")  # Change the prefix as needed
 # Specify intents
@@ -32,6 +32,57 @@ audioSong = "audio\\Frog.mp3"
 # Create an instance of the bot with intents
 bot = commands.Bot(command_prefix="!", intents=intents)
 load_dotenv()
+
+@bot.command()
+async def pomodoro(ctx, study_time: float, break_time: float):
+    user_id = ctx.author.id
+    channel_id = ctx.channel.id
+    if user_id in timers:
+        timers[user_id]['study_time'] = study_time
+        timers[user_id]['break_time'] = break_time
+        timers[user_id]['channel_id'] = channel_id
+    else:
+        timers[user_id] = {
+            'study_time': study_time,
+            'break_time': break_time,
+            'channel_id': channel_id
+        }
+
+    # await ctx.send(f"Alright {ctx.author.mention}, starting your pomodoro timer: {study_time} mins study and {break_time} mins break!")
+    await _speak(ctx, f"{ctx.author.mention}, Alright starting your pomodoro timer: {study_time} mins study and {break_time} mins break!")
+    await start_timer(ctx, study_time, break_time)
+
+
+async def start_timer(ctx, study_time, break_time):
+    user = ctx.author
+    user_id = user.id
+
+    while user_id in timers:  # The loop will continue as long as the user's ID exists in the timers dict
+        await asyncio.sleep(study_time * 60)
+        
+        if user_id in timers:
+            channel = bot.get_channel(timers[user_id]['channel_id'])
+            await _speak(ctx, f"{user.mention},  your study time is up! Take a break for {break_time} mins!")
+
+            await asyncio.sleep(break_time * 60)
+            
+            if user_id in timers:
+                await _speak(ctx, f"{user.mention}, Break's over! Time to get back to work!")
+            else:
+                return
+        else:
+            return
+
+
+@bot.command()
+async def stop(ctx):
+    user_id = ctx.author.id
+    if user_id in timers:
+        del timers[user_id]
+        await _speak(ctx, f" grinding has stopped for {ctx.author.mention}")
+    else:
+        await ctx.send(f"{ctx.author.mention}, you don't have an active pomodoro timer!")
+
 
 # @bot.event
 # async def on_ready():
