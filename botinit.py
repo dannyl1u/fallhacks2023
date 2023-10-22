@@ -9,7 +9,7 @@ import re
 import youtube_dl
 from helper import generate_task_code
 import random
-
+import openai
 import os
 import certifi
 
@@ -38,32 +38,46 @@ load_dotenv()
 #     print(f'Logged in as {bot.user.name} (ID: {bot.user.id})')
 #     channel = bot.get_channel(1162235364719722610)  # Replace YOUR_CHANNEL_ID with the actual channel ID you copied.
 #     print('Message sent to the channel')
-
 @bot.command()
 async def youtube(ctx, youtube_url: str):
     try:
-        video_id=""
-        pattern = r"v=([^&]+)"
-        match = re.search(pattern, youtube_url)
-        if match:
-            video_id = match.group(1)
-        else:
-            pattern = r"(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})"
-            match = re.search(pattern, video_id)
-            if match:
-                video_id = match.group(1)
-            else:
-                print("Video ID not found.")
-            print("Video ID not found.")
-        transcript = YouTubeTranscriptApi.get_transcript(video_id)
-        transcript_text = "\n".join([entry['text'] for entry in transcript])
+        # Extract video ID
+        pattern1 = r"v=([^&]+)"
+        pattern2 = r"(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})"
+        
+        match = re.search(pattern1, youtube_url)
+        if not match:
+            match = re.search(pattern2, youtube_url)
 
-        # Split the message if it's too long for a single Discord message
-        for i in range(0, len(transcript_text), 2000):
-            await ctx.send(transcript_text[i:i+2000])
-            # await ctx.send(transcript_text[i:i+2000])
+        if not match:
+            raise ValueError("Video ID not found.")
+
+        video_id = match.group(1)
+
+        # Fetch the transcript
+        transcript_entries = YouTubeTranscriptApi.get_transcript(video_id)
+        transcript_text = " ".join([entry['text'] for entry in transcript_entries])
+
+        # Extract first 50 words (for brevity)
+        first_50_words = " ".join(transcript_text.split()[:50])
+
+        # Use OpenAI for summarization
+        openai.api_key = os.getenv('OPENAI_API_KEY')
+        response = openai.Completion.create(
+          engine="davinci",
+          prompt=f"The following is the beginning of a youtube video transcript, provide a 1 sentence description of the video:\n\n{first_50_words}",
+          max_tokens=50,  # adjust as needed
+          temperature=0.75
+        )
+        print(response)
+
+        summary = response.choices[0].text.strip()
+
+        await ctx.send(f"```Summary:\n{summary}```")
     except Exception as e:
         await ctx.send(f"An error occurred: {e}")
+
+
 
 @bot.event
 async def on_message(message):
