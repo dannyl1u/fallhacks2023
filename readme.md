@@ -55,7 +55,7 @@ Go to the [Discord Developer Portal](https://discord.com/developers/applications
 1. Clone this repository.
 2. Install the required packages using pip: `pip install -r requirements.txt`.
 3. Set up your `.env` file with the necessary tokens (e.g., `DISCORD_TOKEN` and `OPENAI_API_KEY`).
-4. Run the bot script: `python <script_name>.py`.
+4. Run the bot script: `python botinit.py`.
 
 ### File Structure
 - botinit.py 
