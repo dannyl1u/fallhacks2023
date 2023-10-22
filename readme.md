@@ -1,7 +1,7 @@
 # Discord Bot Utility
 
 ## Introduction:
-This project introduces a multi-functional Discord bot that provides various utilities to users. Whether you need help with time management using Pomodoro timers, playing YouTube video audio in a voice channel, text-to-speech functionality, setting reminders, and more, our bot is here to assist you. The bot easily interacts with users using commands prefixed with `!`.
+Our project, inspired by the theme "uncovering a new leaf", presents a multi-dimensional Discord bot designed to usher in a fresh approach to studying. Recognizing the challenges that students and lifelong learners face in managing their time, sourcing study materials, and retaining information, we have integrated features such as Pomodoro timers, YouTube video audio streaming for educational content, text-to-speech functionality, and reminder systems. By simply using commands prefixed with '!', users can revamp their study habits, and turn over a new leaf in their academic journey.
 
 ## Features:
 
@@ -12,7 +12,7 @@ This project introduces a multi-functional Discord bot that provides various uti
    
 
 ### 2. YouTube Video Summarizer:
-   - Get a concise summary of a YouTube video by providing its link.
+   - YouTube videos are a great way to turn over a new leaf by learning a new skill, get a concise summary of a YouTube video by providing its link.
    - Using OpenAI's API and YouTube Transcript API, the bot summarizes the video and sends it to the user.
    - Command: `!youtube <youtube_url>`.
 
@@ -21,7 +21,7 @@ This project introduces a multi-functional Discord bot that provides various uti
    - Commands: `!join` to join a voice channel, and `!playaudio <youtube_url>` to play the YouTube video's audio.
 
 ### 4. Reminders:
-   - Set tasks and their deadline.
+   - Cultivate your memory by sowing tasks and nurturing their growth until the deadline 🍂
    - Commands: `!remind <task_name> <duration_in_seconds>` to set a reminder.
    - complete a task using `!completeTask <task-code>`
 
