@@ -3,11 +3,18 @@ import discord
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
+from gtts import gTTS
+from youtube_transcript_api import YouTubeTranscriptApi
+import re
+import youtube_dl
 from helper import generate_task_code
 import openai
 
-from youtube_transcript_api import YouTubeTranscriptApi
-import re
+import os
+import certifi
+
+# Set the CA certificates path for SSL verification
+os.environ["SSL_CERT_FILE"] = certifi.where()
 
 
 from pydub import AudioSegment
@@ -196,18 +203,26 @@ async def hello(ctx):
 
 
 
-async def remind_countdown(ctx, task_code, seconds):
-    
-    await ctx.send("sleeping for {seconds} seconds...")
+async def _remind_countdown(ctx, task_code, seconds):
+    username = ctx.author.display_name
+    await ctx.send(f"Hey {username}, sleeping for {seconds} seconds...")
     await asyncio.sleep(seconds)
+    await _speak(ctx, f"{username}, Failed to complete {task_code}!")
+    await ctx.send(f"sleeping for {seconds} seconds...")
+    await asyncio.sleep(seconds)
+    await _speak(ctx, f"Failed to complete {task_code}!")
     
     # TODO: add annoyances here. When we reach this part of the code, it means the user did not finish the task in time
-    
     # To prevent keeping references to finished tasks forever,
     # make each task remove its own reference from the dictionary after
-    background_tasks[task_code].add_done_callback(background_tasks.pop(task_code))
-    await ctx.send(f"{task_code} Failed to complete!")
-    
+    def task_done_callback(task):
+        # Do something when task is done.
+        print(f"Task {task} completed")
+        if task_code in background_tasks:
+            background_tasks.pop(task_code)
+
+    background_tasks[task_code].add_done_callback(task_done_callback)
+
 @bot.command()
 async def cancel(ctx, task_code):
     background_tasks[task_code].cancel()
@@ -230,13 +245,15 @@ async def tasks(ctx):
         await ctx.send(task)
 
 @bot.command()
-async def remind(ctx, task='leetcode',seconds=10):
-    task_code = task+"-"+str(generate_task_code())
+async def remind(ctx, task='leetcode', seconds=5):
+    task_code = task + "-" + str(generate_task_code())
     await ctx.send(f"Activated reminder for {task_code}!")
     
-    _task = asyncio.create_task(remind_countdown(ctx, task_code, seconds))
+    _task = asyncio.create_task(_remind_countdown(ctx, task_code, seconds))
 
+    # Storing the task is not always necessary unless you want to access or cancel it later.
     background_tasks[task_code] = _task
+
 @bot.command()
 async def ping(ctx):
     await ctx.send("Pong!")
@@ -266,10 +283,60 @@ async def pom_event(ctx):
             voice_channel = ctx.author.voice.channel
             voice_client = await voice_channel.connect()
             await ctx.send(f'Joined {voice_channel}')
-        
+        vid = "https://www.youtube.com/watch?v=Pv1QnqHvlg0&ab_channel=Airixs"
+        await ctx.invoke(bot.get_command("playaudio"), vid)
+
+async def _speak(ctx, text_to_speak):
+    print("inside the function")
+    try:
+        # Send the TTS message
+        await ctx.send(text_to_speak, tts=True)
+    except Exception as e:
+        await ctx.send(f"An error occurred: {str(e)}")
+
 @bot.command()
 async def pom_timer(ctx, minutes):
+    try:
+        minutes = int(minutes)
+    except ValueError:
+        await ctx.send("Invalid input. Please provide a valid number of minutes.")
+        return
+
+    await ctx.send(f"Pomodoro timer started for {minutes} minutes. Work hard!")
+
+    # Wait for the specified number of minutes
+    await asyncio.sleep(minutes * 60)
+
+    # After the specified time, send a message to notify the user
     await ctx.invoke(bot.get_command("pom_event"))
+
+@bot.command()
+async def playaudio(ctx, youtube_url): # play youtube video audio
+    if ctx.author.voice and ctx.author.voice.channel:
+        voice_channel = ctx.author.voice.channel
+        voice_client = await voice_channel.connect()
+        await ctx.send(f'Joined {voice_channel}')
+
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+        }
+
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(youtube_url, download=False)
+            url2 = info['formats'][0]['url']
+
+        voice_client.play(discord.FFmpegPCMAudio(url2))
+        while voice_client.is_playing():
+            await asyncio.sleep(1)
+        await voice_client.disconnect()
+    else:
+        await ctx.send("You need to be in a voice channel to use this command.")
+
 
 token = os.getenv('DISCORD_TOKEN')
 bot.run(token)
