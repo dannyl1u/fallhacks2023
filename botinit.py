@@ -19,7 +19,6 @@ os.environ["SSL_CERT_FILE"] = certifi.where()
 
 from pydub import AudioSegment
 
-import pygame
 background_tasks = {}
 timers = {}
 # Create an instance of the bot
@@ -32,6 +31,11 @@ audioSong = "audio\\Frog.mp3"
 # Create an instance of the bot with intents
 bot = commands.Bot(command_prefix="!", intents=intents)
 load_dotenv()
+
+def generate_task_code(n=5):
+    range_start = 10**(n-1)
+    range_end = (10**n)-1
+    return random.randint(range_start, range_end)
 
 @bot.command()
 async def pomodoro(ctx, study_time: float, break_time: float):
