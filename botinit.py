@@ -182,18 +182,26 @@ async def hello(ctx):
 
 
 
-async def remind_countdown(ctx, task_code, seconds):
-    
-    await ctx.send("sleeping for {seconds} seconds...")
+async def _remind_countdown(ctx, task_code, seconds):
+    username = ctx.author.display_name
+    await ctx.send(f"Hey {username}, sleeping for {seconds} seconds...")
     await asyncio.sleep(seconds)
+    await _speak(ctx, f"{username}, Failed to complete {task_code}!")
+    await ctx.send(f"sleeping for {seconds} seconds...")
+    await asyncio.sleep(seconds)
+    await _speak(ctx, f"Failed to complete {task_code}!")
     
     # TODO: add annoyances here. When we reach this part of the code, it means the user did not finish the task in time
-    
     # To prevent keeping references to finished tasks forever,
     # make each task remove its own reference from the dictionary after
-    background_tasks[task_code].add_done_callback(background_tasks.pop(task_code))
-    await ctx.send(f"{task_code} Failed to complete!")
-    
+    def task_done_callback(task):
+        # Do something when task is done.
+        print(f"Task {task} completed")
+        if task_code in background_tasks:
+            background_tasks.pop(task_code)
+
+    background_tasks[task_code].add_done_callback(task_done_callback)
+
 @bot.command()
 async def cancel(ctx, task_code):
     background_tasks[task_code].cancel()
@@ -216,13 +224,15 @@ async def tasks(ctx):
         await ctx.send(task)
 
 @bot.command()
-async def remind(ctx, task='leetcode',seconds=10):
-    task_code = task+"-"+str(generate_task_code())
+async def remind(ctx, task='leetcode', seconds=5):
+    task_code = task + "-" + str(generate_task_code())
     await ctx.send(f"Activated reminder for {task_code}!")
     
-    _task = asyncio.create_task(remind_countdown(ctx, task_code, seconds))
+    _task = asyncio.create_task(_remind_countdown(ctx, task_code, seconds))
 
+    # Storing the task is not always necessary unless you want to access or cancel it later.
     background_tasks[task_code] = _task
+
 @bot.command()
 async def ping(ctx):
     await ctx.send("Pong!")
@@ -255,8 +265,8 @@ async def pom_event(ctx):
         vid = "https://www.youtube.com/watch?v=Pv1QnqHvlg0&ab_channel=Airixs"
         await ctx.invoke(bot.get_command("playaudio"), vid)
 
-@bot.command()
-async def speak(ctx, *, text_to_speak):
+async def _speak(ctx, text_to_speak):
+    print("inside the function")
     try:
         # Send the TTS message
         await ctx.send(text_to_speak, tts=True)
