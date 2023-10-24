@@ -1,4 +1,5 @@
 # LeafMeAlone
+https://youtu.be/KZzj8eHU39I
 
 ## Introduction:
 Our project, inspired by the theme "uncovering a new leaf" 🍃, presents a Discord bot designed to usher in a fresh approach to studying. Recognizing the challenges that students and learners face in managing their time, sourcing study materials, and retaining information, we have integrated features such as Pomodoro timers, YouTube video audio streaming for educational content, text-to-speech functionality, and reminder systems. By simply using commands prefixed with '!', users can revamp their study habits, and turn over a new leaf in their academic journey 📚.
